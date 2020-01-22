@@ -35,8 +35,8 @@ class EventsController extends Controller
             "video" => 'required',
         ]);
         $input = $request->all();
-        // $user = Auth::user();
-        $user = User::find(111);
+        $user = Auth::user();
+        // $user = User::find(111);
         if($user) {
             $event = $user->events()->create($input);
             return response()->json($input);
@@ -46,6 +46,7 @@ class EventsController extends Controller
                 "message" => "Unauthenticated."
             ], 401);
         }
+        // return response()->json($user);
     }
 
     public function show(Event $event)
