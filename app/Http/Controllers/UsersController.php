@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\User;
+use App\OauthAccessToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 Use Carbon\Carbon;
 
 class UsersController extends Controller
@@ -57,13 +59,65 @@ class UsersController extends Controller
     public function update(Request $request)
     {
         $user = Auth::user();
-        $request->all();
+        $input = $request->all();
+        if(isset($input['first_name']))
+            $input['first_name'][0] = strtoupper($input['first_name'][0]);
+        if(isset($input['last_name']))
+            $input['last_name'][0] = strtoupper($input['last_name'][0]);
+        if(isset($input['birthday']))
+            $input['birthday'] = Carbon::parse($input['birthday'])->toDateString();
+        $user->update($input);
         return response()->json($user);
     }
 
     public function secret(Request $request)
     {
+        # code...
         $user = Auth::user();
-        return response()->json($user);
+        return response()->json([
+            "user" => $user,
+            "token" => $user->token()
+        ]);
+    }
+    
+    public function password_change(Request $request)
+    {
+        $user = Auth::user();
+        $request->validate([
+            "old_password" => "required",
+            "new_password" => "required",
+            "password_confirmation" => "required|same:new_password",
+        ]);
+
+        $credentials = [
+            "email" => $user->email,
+            "password" => $request->old_password,
+        ];
+
+        if (Hash::check($request->old_password, $user->password)) {
+            // Authentication passed...
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+            $user->AauthAcessToken()->delete();
+            return response()->json([$user, 'sukses']);
+        }
+
+        return response()->json(
+            [
+                'user' => $user,
+                'request' => $request->all(),
+                'check' => Hash::check($request->old_password, $user->password)
+            ]);
+    }
+
+    public function logout()
+    {
+        # code...
+        $token = OauthAccessToken::find(Auth::user()->token()->id);
+        if($token)
+            $token->delete();
+        return response()->json([
+            "message" => "sukses logout"
+        ]);
     }
 }

@@ -42,4 +42,8 @@ class User extends Authenticatable
     {
         return $this->hasMany('App\Event');
     }
+
+    public function AauthAcessToken(){
+        return $this->hasMany('App\OauthAccessToken');
+    }
 }

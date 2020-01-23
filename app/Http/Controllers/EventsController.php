@@ -57,4 +57,22 @@ class EventsController extends Controller
             ]);
     }
 
+    public function update(Request $request, Event $event)
+    {
+        # code...
+        $user = Auth::user();
+        if($user->id == $event->user_id)
+        {
+            $input = $request->all();
+            $event->update($input);
+            return response()->json([
+                "user" => Auth::user(),
+                "event" => $event
+            ]);
+        }
+        return response()->json([
+                "message"=> "Unauthorized"
+        ], 401);
+    }
+
 }
